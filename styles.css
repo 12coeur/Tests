@@ -1,0 +1,32 @@
+/* styles.css */
+
+main {
+    display: flex;
+    flex-wrap: wrap; /* Permettre de passer à une nouvelle ligne si nécessaire */
+    justify-content: center;
+    align-items: flex-start;
+    margin: 0 auto; /* Centrer le contenu horizontalement */
+    padding: 0 10px; /* Ajouter un peu de marge latérale */
+}
+
+canvas {
+    flex: 1 1 calc(100% - 20px); /* Ajuster la largeur à 100% - 20px pour les marges */
+    margin: 10px;
+    height: 50vh; /* Ajuster la hauteur des graphiques pour les écrans plus petits */
+    max-width: 100%; /* Empêcher le dépassement des largeurs */
+}
+
+/* Media Queries pour différents écrans */
+@media (min-width: 600px) {
+    canvas {
+        flex: 1 1 calc(50% - 20px); /* Ajuster la largeur à 50% pour les écrans moyens */
+        height: 40vh; /* Ajuster la hauteur des graphiques */
+    }
+}
+
+@media (min-width: 900px) {
+    canvas {
+        flex: 1 1 calc(33.33% - 20px); /* Ajuster la largeur à 33.33% pour les grands écrans */
+        height: 30vh; /* Ajuster la hauteur des graphiques */
+    }
+}
