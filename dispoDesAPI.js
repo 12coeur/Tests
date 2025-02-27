@@ -1,73 +1,70 @@
 window.onload = function() {
     const log = document.getElementById('log');
+    log.style.maxHeight = 'none'; // Supprime la limite de hauteur
+    log.style.overflowY = 'auto'; // Permet un défilement si nécessaire
+    log.style.minHeight = '50px'; // Assure une hauteur minimale
 
-    function logAPI(name, available) {
-        const message = `${name} ${available ? 'disponible' : 'non disponible'}`;
+    let availableCount = 0;
+    let blockedCount = 0;
+    let unavailableCount = 0;
+
+    function logAPI(name, available, blocked = false, error = null) {
+        let message = `${name} ${available ? 'disponible' : (blocked ? 'bloqué par le navigateur' : 'non disponible')}`;
+        if (error) {
+            message += ` (Erreur: ${error})`;
+        }
         console.log(message);
-        log.innerHTML += message + '<br>';
+        const p = document.createElement('p');
+        p.textContent = message;
+        p.style.color = available ? 'darkgreen' : (blocked ? 'red' : 'gray');
+        log.appendChild(p);
+
+        if (available) {
+            availableCount++;
+        } else if (blocked) {
+            blockedCount++;
+        } else {
+            unavailableCount++;
+        }
     }
 
-    // Vérification de l'API baromètre
-    if ('AmbientLightSensor' in window) {
-        logAPI('API Baromètre', true);
-    } else {
-        logAPI('API Baromètre', false);
+    function testAPI(name, property, object = window) {
+        try {
+            if (property in object) {
+                logAPI(name, true);
+            } else {
+                logAPI(name, false, false);
+            }
+        } catch (e) {
+            logAPI(name, false, true, e.message);
+        }
     }
 
-    // Vérification de l'API de capteurs de mouvement
-    if ('DeviceOrientationEvent' in window) {
-        logAPI('API Orientation (DeviceOrientationEvent)', true);
-    } else {
-        logAPI('API Orientation (DeviceOrientationEvent)', false);
-    }
+    testAPI('API Orientation (DeviceOrientationEvent)', 'DeviceOrientationEvent');
+    testAPI('API Mouvement (DeviceMotionEvent)', 'DeviceMotionEvent');
+    testAPI('API Capteur de lumière ambiante', 'AmbientLightSensor');
+    testAPI('API Pression Barométrique', 'Barometer');
+    testAPI('API Géolocalisation', 'geolocation', navigator);
+    testAPI('API Batterie', 'getBattery', navigator);
 
-    // Vérification de l'API de mouvement (DeviceMotionEvent)
-    if ('DeviceMotionEvent' in window) {
-        logAPI('API Mouvement (DeviceMotionEvent)', true);
-    } else {
-        logAPI('API Mouvement (DeviceMotionEvent)', false);
-    }
-
-    // Vérification de l'API de capteur de lumière ambiante
-    if ('AmbientLightSensor' in window) {
-        logAPI('API Capteur de lumière ambiante', true);
-    } else {
-        logAPI('API Capteur de lumière ambiante', false);
-    }
-
-    // Vérification de l'API de capteur de pression barométrique
     if ('Barometer' in window) {
-        logAPI('API Pression Barométrique', true);
+        console.log("L'API Baromètre est disponible");
+        try {
+            let barometer = new Barometer();
+            barometer.addEventListener('reading', () => {
+                console.log(`Pression atmosphérique : ${barometer.pressure} hPa`);
+            });
+            barometer.start();
+        } catch (e) {
+            console.error('Erreur avec l\'API Baromètre:', e);
+            logAPI('API Pression Barométrique', false, true, e.message);
+        }
     } else {
-        logAPI('API Pression Barométrique', false);
+        console.log("L'API Baromètre n'est pas disponible sur cet appareil.");
     }
 
-    // Vérification de l'API géolocalisation
-    if ('geolocation' in navigator) {
-        logAPI('API Géolocalisation', true);
-    } else {
-        logAPI('API Géolocalisation', false);
-    }
-
-    // Vérification de l'API de batterie
-    if ('getBattery' in navigator) {
-        logAPI('API Batterie', true);
-    } else {
-        logAPI('API Batterie', false);
-    }
-if ('Barometer' in window) {
-    console.log("L'API Baromètre est disponible");
-    try {
-        let barometer = new Barometer();
-        barometer.addEventListener('reading', () => {
-            console.log(`Pression atmosphérique : ${barometer.pressure} hPa`);
-        });
-        barometer.start();
-    } catch (e) {
-        console.error('Erreur avec l\'API Baromètre:', e);
-    }
-} else {
-    console.log("L'API Baromètre n'est pas disponible sur cet appareil.");
-}
-
-}
+    // Afficher le résumé des API disponibles, bloquées et non disponibles
+    const summary = document.createElement('p');
+    summary.innerHTML = `<strong>Total disponibles:</strong> ${availableCount} | <strong>Total bloqués:</strong> ${blockedCount} | <strong>Total non disponibles:</strong> ${unavailableCount}`;
+    log.appendChild(summary);
+};
