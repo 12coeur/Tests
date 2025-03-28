@@ -1,8 +1,8 @@
-window.onload = function() {
+window.onload = async function() {
     const log = document.getElementById('log');
-    log.style.maxHeight = 'none'; // Supprime la limite de hauteur
-    log.style.overflowY = 'auto'; // Permet un défilement si nécessaire
-    log.style.minHeight = '50px'; // Assure une hauteur minimale
+    log.style.maxHeight = 'none';
+    log.style.overflowY = 'auto';
+    log.style.minHeight = '50px';
 
     let availableCount = 0;
     let blockedCount = 0;
@@ -43,27 +43,35 @@ window.onload = function() {
     testAPI('API Orientation (DeviceOrientationEvent)', 'DeviceOrientationEvent');
     testAPI('API Mouvement (DeviceMotionEvent)', 'DeviceMotionEvent');
     testAPI('API Capteur de lumière ambiante', 'AmbientLightSensor');
-    testAPI('API Pression Barométrique', 'Barometer');
     testAPI('API Géolocalisation', 'geolocation', navigator);
     testAPI('API Batterie', 'getBattery', navigator);
 
+    // Vérification et test du Baromètre (Pression Atmosphérique)
     if ('Barometer' in window) {
-        console.log("L'API Baromètre est disponible");
         try {
-            let barometer = new Barometer();
+            const barometer = new Barometer({ frequency: 1 });
+
             barometer.addEventListener('reading', () => {
                 console.log(`Pression atmosphérique : ${barometer.pressure} hPa`);
+                logAPI('API Pression Barométrique', true);
             });
-            barometer.start();
+
+            barometer.addEventListener('error', (event) => {
+                console.error('Erreur avec l\'API Baromètre:', event.error.name, event.error.message);
+                logAPI('API Pression Barométrique', false, true, event.error.message);
+            });
+
+            await barometer.start();
         } catch (e) {
-            console.error('Erreur avec l\'API Baromètre:', e);
+            console.error('Erreur lors du démarrage du baromètre:', e);
             logAPI('API Pression Barométrique', false, true, e.message);
         }
     } else {
         console.log("L'API Baromètre n'est pas disponible sur cet appareil.");
+        logAPI('API Pression Barométrique', false);
     }
 
-    // Afficher le résumé des API disponibles, bloquées et non disponibles
+    // Affichage du résumé des API testées
     const summary = document.createElement('p');
     summary.innerHTML = `<strong>Total disponibles:</strong> ${availableCount} | <strong>Total bloqués:</strong> ${blockedCount} | <strong>Total non disponibles:</strong> ${unavailableCount}`;
     log.appendChild(summary);
